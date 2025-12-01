@@ -1964,7 +1964,7 @@ i[34567]86-*-darwin*)
 	tm_file="${cpu_type}/darwin32-biarch.h ${tm_file} "
 	;;
 x86_64-*-bentobox*)
-	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h bentobox.h"
+	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h bentobox.h gnu-user.h"
 	;;
 x86_64-*-darwin1[89]* | x86_64-*-darwin2*)
 	# Only 64b from now
