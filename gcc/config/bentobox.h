@@ -1,6 +1,6 @@
 /* Useful if you wish to make target-specific GCC changes. */
-#undef TARGET_MYOS
-#define TARGET_MYOS 1
+#undef TARGET_BENTOBOX
+#define TARGET_BENTOBOX 1
 
 /* Default arguments you want when running your
    i686-myos-gcc/x86_64-myos-gcc toolchain */
@@ -12,7 +12,7 @@
 /* Files that are linked before user code.
    The %s tells GCC to look for these files in the library directory. */
 #undef STARTFILE_SPEC
-#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
+#define STARTFILE_SPEC "crt1.o%s crti.o%s crtbegin.o%s"
 
 /* Files that are linked after user code. */
 #undef ENDFILE_SPEC
