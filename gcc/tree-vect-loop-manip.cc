@@ -2353,6 +2353,16 @@ vect_update_ivs_after_vectorizer (loop_vec_info loop_vinfo,
   class loop *loop = LOOP_VINFO_LOOP (loop_vinfo);
   basic_block update_bb = update_e->dest;
   basic_block exit_bb = update_e->src;
+  /* Check to see if this is an empty loop pre-header block.  If it exists
+     we need to use the edge from that block -> loop header for updates but
+     must use the original exit_bb to add any new adjustment because there
+     can be a skip_epilog edge bypassing the epilog and so the loop pre-header
+     too.  */
+  if (empty_block_p (update_bb) && single_succ_p (update_bb))
+    {
+      update_e = single_succ_edge (update_bb);
+      update_bb = update_e->dest;
+    }
   gimple_stmt_iterator last_gsi = gsi_last_bb (exit_bb);
 
   for (gsi = gsi_start_phis (loop->header), gsi1 = gsi_start_phis (update_bb);
@@ -2439,10 +2449,15 @@ vect_update_ivs_after_vectorizer (loop_vec_info loop_vinfo,
       gimple *use_stmt;
       use_operand_p use_p;
       tree ic_var = PHI_ARG_DEF_FROM_EDGE (phi1, update_e);
-      FOR_EACH_IMM_USE_STMT (use_stmt, imm_iter, ic_var)
-	if (!flow_bb_inside_loop_p (loop, gimple_bb (use_stmt)))
-	  FOR_EACH_IMM_USE_ON_STMT (use_p, imm_iter)
-	    SET_USE (use_p, ni_name);
+      if (TREE_CODE (ic_var) == SSA_NAME)
+	{
+	  FOR_EACH_IMM_USE_STMT (use_stmt, imm_iter, ic_var)
+	    if (!flow_bb_inside_loop_p (loop, gimple_bb (use_stmt)))
+	      FOR_EACH_IMM_USE_ON_STMT (use_p, imm_iter)
+		SET_USE (use_p, ni_name);
+	}
+      else
+	adjust_phi_and_debug_stmts (phi1, update_e, ni_name);
     }
 }
 
@@ -3600,6 +3615,7 @@ vect_do_peeling (loop_vec_info loop_vinfo, tree niters, tree nitersm1,
 					   skip_vector ? anchor : guard_bb,
 					   prob_epilog.invert (),
 					   irred_flag);
+
 	  doms.safe_push (guard_to);
 	  if (vect_epilogues)
 	    epilogue_vinfo->skip_this_loop_edge = guard_e;
@@ -3649,16 +3665,16 @@ vect_do_peeling (loop_vec_info loop_vinfo, tree niters, tree nitersm1,
 	  tree scal_iv_ty = signed_type_for (TREE_TYPE (vector_iters_vf));
 	  tree tmp_niters_vf = make_ssa_name (scal_iv_ty);
 	  basic_block exit_bb = NULL;
-	  edge update_e = NULL;
 
 	  /* Identify the early exit merge block.  I wish we had stored this.  */
 	  for (auto e : get_loop_exit_edges (loop))
 	    if (e != LOOP_VINFO_IV_EXIT (loop_vinfo))
 	      {
 		exit_bb = e->dest;
-		update_e = single_succ_edge (exit_bb);
 		break;
 	      }
+
+	  edge update_e = single_succ_edge (exit_bb);
 	  vect_update_ivs_after_vectorizer (loop_vinfo, tmp_niters_vf,
 					    update_e, true);
 

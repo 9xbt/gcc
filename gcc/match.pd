@@ -3273,6 +3273,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
        || POINTER_TYPE_P (itype))
       && wi::eq_p (wi::to_wide (int_cst), wi::max_value (itype))))))
 
+#if GIMPLE
 /* Saturation add for unsigned integer.  */
 (if (INTEGRAL_TYPE_P (type) && TYPE_UNSIGNED (type))
  (match (usadd_overflow_mask @0 @1)
@@ -3814,6 +3815,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
      }
      (if (c2_is_max_p)))))
 )
+#endif
 
 /* The boundary condition for case 10: IMM = 1:
    SAT_U_SUB = X >= IMM ? (X - IMM) : 0.
@@ -6616,6 +6618,22 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
        (convert (plus (convert:type1 @0) { arg; }))
        (convert (minus { arg; } (convert:type1 @0))))))))))
 #endif
+
+/* X & C1 ? (X + -C1) : (X | C1) -> X ^ C1
+   X & C1 ? (X & ~C1) : (X | C1) -> X ^ C1
+   when C1 has a single bit set.  */
+(for op (plus bit_and)
+ (simplify
+  (cond (ne (bit_and @0 INTEGER_CST@1) integer_zerop)
+	     (op @0 INTEGER_CST@2) (bit_ior @0 @1))
+   (with {
+     auto c1 = wi::to_wide (@1);
+     auto c2 = wi::to_wide (@2);
+    }
+    (if (wi::popcount (c1) == 1
+	  && ((op == PLUS_EXPR && wi::eq_p (wi::neg (c2), c1))
+	       || (op == BIT_AND_EXPR && wi::eq_p (wi::bit_not (c2), c1))))
+	  (bit_xor @0 @1)))))
 
 (simplify
  (convert (cond@0 @1 INTEGER_CST@2 INTEGER_CST@3))
@@ -11749,6 +11767,7 @@ and,
 	  (vec_perm @2 @5 { op0; })))))))))))
 
 
+#if GIMPLE
 /* Match count trailing zeroes for simplify_count_zeroes in forwprop.
    The canonical form is array[((x & -x) * C) >> SHIFT] where C is a magic
    constant which when multiplied by a power of 2 contains a unique value
@@ -11895,6 +11914,8 @@ and,
 (match (bitwise_induction_p @0 @2 @3)
  (bit_not
   (nop_convert1? (bit_xor@0 (convert2? (lshift integer_onep@1 @2)) @3))))
+
+#endif
 
 /* n - (((n > C1) ? n : C1) & -C2) ->  n & C1 for unsigned case.
    n - (((n > C1) ? n : C1) & -C2) ->  (n <= C1) ? n : (n & C1) for signed case.  */

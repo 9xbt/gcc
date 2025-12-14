@@ -985,9 +985,9 @@
 
 #if !defined(__cpp_lib_concepts)
 # if (__cplusplus >= 202002L) && (__cpp_concepts >= 201907L)
-#  define __glibcxx_concepts 202002L
+#  define __glibcxx_concepts 202207L
 #  if defined(__glibcxx_want_all) || defined(__glibcxx_want_concepts)
-#   define __cpp_lib_concepts 202002L
+#   define __cpp_lib_concepts 202207L
 #  endif
 # endif
 #endif /* !defined(__cpp_lib_concepts) */
@@ -1214,7 +1214,7 @@
 
 #if !defined(__cpp_lib_padded_layouts)
 # if (__cplusplus >  202302L)
-#  define __glibcxx_padded_layouts 1L
+#  define __glibcxx_padded_layouts 202403L
 #  if defined(__glibcxx_want_all) || defined(__glibcxx_want_padded_layouts)
 #  endif
 # endif
@@ -1222,9 +1222,10 @@
 #undef __glibcxx_want_padded_layouts
 
 #if !defined(__cpp_lib_submdspan)
-# if (__cplusplus >  202302L)
-#  define __glibcxx_submdspan 1L
+# if (__cplusplus >  202302L) && (__glibcxx_constant_wrapper >= 202506L)
+#  define __glibcxx_submdspan 202411L
 #  if defined(__glibcxx_want_all) || defined(__glibcxx_want_submdspan)
+#   define __cpp_lib_submdspan 202411L
 #  endif
 # endif
 #endif /* !defined(__cpp_lib_submdspan) */
@@ -1494,6 +1495,16 @@
 # endif
 #endif /* !defined(__cpp_lib_constexpr_dynamic_alloc) */
 #undef __glibcxx_want_constexpr_dynamic_alloc
+
+#if !defined(__cpp_lib_constexpr_flat_set)
+# if (__cplusplus >  202302L)
+#  define __glibcxx_constexpr_flat_set 202502L
+#  if defined(__glibcxx_want_all) || defined(__glibcxx_want_constexpr_flat_set)
+#   define __cpp_lib_constexpr_flat_set 202502L
+#  endif
+# endif
+#endif /* !defined(__cpp_lib_constexpr_flat_set) */
+#undef __glibcxx_want_constexpr_flat_set
 
 #if !defined(__cpp_lib_constexpr_string)
 # if (__cplusplus >= 202002L) && _GLIBCXX_USE_CXX11_ABI && _GLIBCXX_HOSTED && (defined(__glibcxx_is_constant_evaluated))
@@ -2030,6 +2041,26 @@
 #endif /* !defined(__cpp_lib_flat_set) */
 #undef __glibcxx_want_flat_set
 
+#if !defined(__cpp_lib_common_reference)
+# if (__cplusplus >= 202002L)
+#  define __glibcxx_common_reference 202302L
+#  if defined(__glibcxx_want_all) || defined(__glibcxx_want_common_reference)
+#   define __cpp_lib_common_reference 202302L
+#  endif
+# endif
+#endif /* !defined(__cpp_lib_common_reference) */
+#undef __glibcxx_want_common_reference
+
+#if !defined(__cpp_lib_common_reference_wrapper)
+# if (__cplusplus >= 202002L)
+#  define __glibcxx_common_reference_wrapper 202302L
+#  if defined(__glibcxx_want_all) || defined(__glibcxx_want_common_reference_wrapper)
+#   define __cpp_lib_common_reference_wrapper 202302L
+#  endif
+# endif
+#endif /* !defined(__cpp_lib_common_reference_wrapper) */
+#undef __glibcxx_want_common_reference_wrapper
+
 #if !defined(__cpp_lib_formatters)
 # if (__cplusplus >= 202100L) && _GLIBCXX_HOSTED
 #  define __glibcxx_formatters 202302L
@@ -2169,6 +2200,16 @@
 # endif
 #endif /* !defined(__cpp_lib_string_resize_and_overwrite) */
 #undef __glibcxx_want_string_resize_and_overwrite
+
+#if !defined(__cpp_lib_string_subview)
+# if (__cplusplus >  202302L)
+#  define __glibcxx_string_subview 202506L
+#  if defined(__glibcxx_want_all) || defined(__glibcxx_want_string_subview)
+#   define __cpp_lib_string_subview 202506L
+#  endif
+# endif
+#endif /* !defined(__cpp_lib_string_subview) */
+#undef __glibcxx_want_string_subview
 
 #if !defined(__cpp_lib_to_underlying)
 # if (__cplusplus >= 202100L)
@@ -2447,8 +2488,9 @@
 
 #if !defined(__cpp_lib_constexpr_exceptions)
 # if (__cplusplus >  202302L) && (__cpp_constexpr_exceptions >= 202411L)
-#  define __glibcxx_constexpr_exceptions 1L
+#  define __glibcxx_constexpr_exceptions 202502L
 #  if defined(__glibcxx_want_all) || defined(__glibcxx_want_constexpr_exceptions)
+#   define __cpp_lib_constexpr_exceptions 202502L
 #  endif
 # endif
 #endif /* !defined(__cpp_lib_constexpr_exceptions) */

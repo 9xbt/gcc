@@ -265,8 +265,12 @@ struct vect_simd_clone_data : vect_data {
   vect_simd_clone_data () = default;
   vect_simd_clone_data (vect_simd_clone_data &&other) = default;
 
+  /* Selected SIMD clone and clone for in-branch.  */
+  cgraph_node *clone;
+  cgraph_node *clone_inbranch;
+
   /* Selected SIMD clone's function info.  First vector element
-     is SIMD clone's function decl, followed by a pair of trees (base + step)
+     is NULL_TREE, followed by a pair of trees (base + step)
      for linear arguments (pair of NULLs for other arguments).  */
   auto_vec<tree> simd_clone_info;
 };
@@ -2492,8 +2496,7 @@ extern bool vect_is_simple_use (vec_info *, slp_tree,
 				tree *, stmt_vec_info * = NULL);
 extern bool vect_maybe_update_slp_op_vectype (slp_tree, tree);
 extern tree perm_mask_for_reverse (tree);
-extern bool supportable_widening_operation (vec_info*, code_helper,
-					    stmt_vec_info, tree, tree,
+extern bool supportable_widening_operation (code_helper, tree, tree, bool,
 					    code_helper*, code_helper*,
 					    int*, vec<tree> *);
 extern bool supportable_narrowing_operation (code_helper, tree, tree,

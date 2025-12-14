@@ -1217,6 +1217,10 @@ match_char_length (gfc_expr **expr, bool *deferred, bool obsolescent_check)
       goto syntax;
     }
 
+  if (obsolescent_check
+      && !gfc_notify_std (GFC_STD_F95_OBS, "Old-style character length at %C"))
+    return MATCH_ERROR;
+
   return MATCH_YES;
 
 syntax:
@@ -3969,6 +3973,7 @@ gfc_get_pdt_instance (gfc_actual_arglist *param_list, gfc_symbol **sym,
   gfc_expr *kind_expr;
   gfc_component *c1, *c2;
   match m;
+  gfc_symtree *s = NULL;
 
   type_param_spec_list = NULL;
 
@@ -3982,8 +3987,7 @@ gfc_get_pdt_instance (gfc_actual_arglist *param_list, gfc_symbol **sym,
   if (gfc_current_state () == COMP_DERIVED
       && !(gfc_state_stack->previous
 	   && gfc_state_stack->previous->state == COMP_DERIVED)
-      && gfc_current_block ()->attr.pdt_template
-      && !strcmp (gfc_current_block ()->name, (*sym)->name))
+      && gfc_current_block ()->attr.pdt_template)
     {
       if (ext_param_list)
 	*ext_param_list = gfc_copy_actual_arglist (param_list);
@@ -4022,6 +4026,11 @@ gfc_get_pdt_instance (gfc_actual_arglist *param_list, gfc_symbol **sym,
 	 (resolve_fl_derived0).  */
       if (!pdt->attr.use_assoc && !c1)
 	goto error_return;
+
+      /* Resolution PDT class components of derived types are handled here.
+	 They can arrive without a parameter list and no KIND parameters.  */
+      if (!param_list && (!c1->attr.pdt_kind && !c1->initializer))
+	continue;
 
       kind_expr = NULL;
       if (!name_seen)
@@ -4179,10 +4188,29 @@ gfc_get_pdt_instance (gfc_actual_arglist *param_list, gfc_symbol **sym,
       goto error_return;
     }
 
+  /* If we are in an interface body, the instance will not have been imported.
+     Make sure that it is imported implicitly.  */
+  s = gfc_find_symtree (gfc_current_ns->sym_root, pdt->name);
+  if (gfc_current_ns->proc_name
+      && gfc_current_ns->proc_name->attr.if_source == IFSRC_IFBODY
+      && s && s->import_only && pdt->attr.imported)
+    {
+      s = gfc_find_symtree (gfc_current_ns->sym_root, instance->name);
+      if (!s)
+	{
+	  gfc_get_sym_tree (instance->name, gfc_current_ns, &s, false,
+			    &gfc_current_locus);
+	  s->n.sym = instance;
+	}
+      s->n.sym->attr.imported = 1;
+      s->import_only = 1;
+    }
+
   m = MATCH_YES;
 
   if (instance->attr.flavor == FL_DERIVED
-      && instance->attr.pdt_type)
+      && instance->attr.pdt_type
+      && instance->components)
     {
       instance->refs++;
       if (ext_param_list)
@@ -4447,7 +4475,25 @@ gfc_get_pdt_instance (gfc_actual_arglist *param_list, gfc_symbol **sym,
 	  type_param_spec_list = old_param_spec_list;
 
 	  if (!(c2->attr.pointer || c2->attr.allocatable))
-	    c2->initializer = gfc_default_initializer (&c2->ts);
+	    {
+	      if (!c1->initializer
+		  || c1->initializer->expr_type != EXPR_FUNCTION)
+		c2->initializer = gfc_default_initializer (&c2->ts);
+	      else
+		{
+		  gfc_symtree *s;
+		  c2->initializer = gfc_copy_expr (c1->initializer);
+		  s = gfc_find_symtree (pdt->ns->sym_root,
+				gfc_dt_lower_string (c2->ts.u.derived->name));
+		  if (s)
+		    c2->initializer->symtree = s;
+		  c2->initializer->ts = c2->ts;
+		  if (!s)
+		    gfc_insert_parameter_exprs (c2->initializer,
+						type_param_spec_list);
+		  gfc_simplify_expr (params->expr, 1);
+		}
+	    }
 
 	  if (c2->attr.allocatable)
 	    instance->attr.alloc_comp = 1;

@@ -9799,8 +9799,10 @@ done_errmsg:
       /* Resolving the expr3 in the loop over all objects to allocate would
 	 execute loop invariant code for each loop item.  Therefore do it just
 	 once here.  */
+      mpz_t nelem;
       if (code->expr3 && code->expr3->mold
-	  && code->expr3->ts.type == BT_DERIVED)
+	  && code->expr3->ts.type == BT_DERIVED
+	  && !(code->expr3->ref && gfc_array_size (code->expr3, &nelem)))
 	{
 	  /* Default initialization via MOLD (non-polymorphic).  */
 	  gfc_expr *rhs = gfc_default_initializer (&code->expr3->ts);
@@ -17626,6 +17628,22 @@ resolve_fl_derived (gfc_symbol *sym)
       gfc_component *data = gfc_find_component (sym, "_data", true, true, NULL);
       gfc_component *vptr = gfc_find_component (sym, "_vptr", true, true, NULL);
 
+      if (data->ts.u.derived->attr.pdt_template)
+	{
+	  match m;
+	  m = gfc_get_pdt_instance (sym->param_list, &data->ts.u.derived,
+				    &data->param_list);
+	  if (m != MATCH_YES
+	      || !gfc_build_class_symbol (&sym->ts, &sym->attr, &sym->as))
+	    {
+	      gfc_error ("Failed to build PDT class component at %L",
+			 &sym->declared_at);
+	      return false;
+	    }
+	  data = gfc_find_component (sym, "_data", true, true, NULL);
+	  vptr = gfc_find_component (sym, "_vptr", true, true, NULL);
+	}
+
       /* Nothing more to do for unlimited polymorphic entities.  */
       if (data->ts.u.derived->attr.unlimited_polymorphic)
 	{
@@ -17637,7 +17655,7 @@ resolve_fl_derived (gfc_symbol *sym)
 	  gfc_symbol *vtab = gfc_find_derived_vtab (data->ts.u.derived);
 	  gcc_assert (vtab);
 	  vptr->ts.u.derived = vtab->ts.u.derived;
-	  if (!resolve_fl_derived0 (vptr->ts.u.derived))
+	  if (vptr->ts.u.derived && !resolve_fl_derived0 (vptr->ts.u.derived))
 	    return false;
 	}
     }
@@ -18143,6 +18161,7 @@ skip_interfaces:
 
   /* F2008, C530.  */
   if (sym->attr.contiguous
+      && !sym->attr.associate_var
       && (!class_attr.dimension
 	  || (as->type != AS_ASSUMED_SHAPE && as->type != AS_ASSUMED_RANK
 	      && !class_attr.pointer)))
