@@ -759,7 +759,7 @@ x86_64-*-fuchsia*)
 	;;
 x86_64-*-bentobox*)
 	extra_parts="$extra_parts crti.o crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o crtn.o"
-	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
+	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver t-libgcc-pic"
 	;;
 i[34567]86-*-dragonfly*)
 	tmake_file="${tmake_file} i386/t-dragonfly i386/t-crtstuff"
