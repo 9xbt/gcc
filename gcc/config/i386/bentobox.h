@@ -24,6 +24,9 @@
 #define GNU_USER_DYNAMIC_LINKER64 "/usr/lib/ld.so"
 #define GNU_USER_DYNAMIC_LINKERX32 "/does_not_exist"
 
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC "-fdisable-rtl-x86_cse"
+
 /* Additional predefined macros. */
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()      \
